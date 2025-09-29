@@ -1,0 +1,131 @@
+#!/usr/bin/env python3
+"""
+Quick test script to debug FastAPI authentication
+Run this in your backend directory to test login functionality
+"""
+
+import requests
+import json
+
+def test_login():
+    """Test login with different approaches"""
+    
+    base_url = "http://localhost:8000"
+    test_email = "admin@callcenter.com"
+    test_password = "admin123"  # Change this to your actual password
+    
+    print("=== Testing FastAPI Login Authentication ===")
+    print(f"Backend URL: {base_url}")
+    print(f"Test email: {test_email}")
+    print(f"Password: {'*' * len(test_password)}")
+    print()
+    
+    # Test 1: JSON request (what your frontend is doing)
+    print("🔍 Test 1: JSON Request (Current Frontend Method)")
+    try:
+        response = requests.post(
+            f"{base_url}/api/v1/auth/login",
+            headers={
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            json={
+                "email": test_email,
+                "password": test_password
+            },
+            timeout=10
+        )
+        
+        print(f"   Status: {response.status_code}")
+        print(f"   Headers: {dict(response.headers)}")
+        
+        try:
+            response_data = response.json()
+            print(f"   Response: {json.dumps(response_data, indent=2)}")
+        except:
+            print(f"   Raw Response: {response.text}")
+            
+        if response.status_code == 200:
+            print("   ✅ SUCCESS - JSON method works!")
+            return response.json()
+        else:
+            print(f"   ❌ FAILED - Status {response.status_code}")
+            
+    except requests.exceptions.ConnectionError:
+        print("   ❌ CONNECTION ERROR - Is your FastAPI server running?")
+        return None
+    except Exception as e:
+        print(f"   ❌ ERROR: {e}")
+        
+    print()
+    
+    # Test 2: Form data request (OAuth2 standard)
+    print("🔍 Test 2: Form Data Request (OAuth2 Standard)")
+    try:
+        response = requests.post(
+            f"{base_url}/api/v1/auth/login",
+            headers={
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Accept': 'application/json'
+            },
+            data={
+                "username": test_email,
+                "password": test_password,
+                "grant_type": "password"
+            },
+            timeout=10
+        )
+        
+        print(f"   Status: {response.status_code}")
+        print(f"   Headers: {dict(response.headers)}")
+        
+        try:
+            response_data = response.json()
+            print(f"   Response: {json.dumps(response_data, indent=2)}")
+        except:
+            print(f"   Raw Response: {response.text}")
+            
+        if response.status_code == 200:
+            print("   ✅ SUCCESS - Form data method works!")
+            return response.json()
+        else:
+            print(f"   ❌ FAILED - Status {response.status_code}")
+            
+    except requests.exceptions.ConnectionError:
+        print("   ❌ CONNECTION ERROR - Is your FastAPI server running?")
+        return None
+    except Exception as e:
+        print(f"   ❌ ERROR: {e}")
+        
+    print()
+    
+    # Test 3: Check if user exists in database
+    print("🔍 Test 3: Database User Check")
+    try:
+        # This won't work unless you add debug endpoints, but let's try
+        response = requests.get(f"{base_url}/docs")
+        if response.status_code == 200:
+            print("   ✅ FastAPI server is running (docs accessible)")
+        else:
+            print("   ❌ FastAPI server might not be running properly")
+    except:
+        print("   ❌ Cannot connect to FastAPI server")
+    
+    print()
+    print("=== Recommendations ===")
+    print("1. Make sure your FastAPI server is running on localhost:8000")
+    print("2. Check your backend logs for detailed error messages")
+    print("3. Verify the admin user exists in your MongoDB with correct password hash")
+    print("4. Try different passwords: 'admin123', 'password', '123456', 'admin'")
+    print("5. Check if your backend auth endpoint expects JSON or form data")
+
+if __name__ == "__main__":
+    try:
+        import requests
+    except ImportError:
+        print("Installing requests...")
+        import subprocess
+        subprocess.check_call(["pip", "install", "requests"])
+        import requests
+    
+    test_login()
